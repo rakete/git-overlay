@@ -1,6 +1,6 @@
 Creates a simple overlay for the current buffer that shows non-staged git chunks.
 
-Lines around additions/deletions are shown blue, additions in green, deletetions
+Lines around additions/deletions are shown blue, additions in green, deletions
 won't show up at all.
 
 Just copy it somewhere in your load-path, or add the directory containing the
