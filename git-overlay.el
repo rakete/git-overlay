@@ -1,4 +1,6 @@
 
+(require 'cl)
+
 (defun git-overlay-basedir (path)
   (apply #'concat (reverse (mapcar (lambda (s)
                                      (concat s "/"))
