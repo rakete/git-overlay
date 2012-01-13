@@ -1,4 +1,18 @@
 
+(defun git-overlay-basedir (path)
+  (apply #'concat (reverse (mapcar (lambda (s)
+                                     (concat s "/"))
+                                   (cdr (reverse (split-string path "/")))))))
+
+(defun git-overlay-filename (path)
+  (car (reverse (split-string path "/"))))
+
+(defmacro git-overlay-with-directory (path &rest body)
+  `(let ((currentdir default-directory))
+     (cd ,path)
+     ,@body
+     (cd currentdir)))
+
 (defmacro walk-head (&rest body)
   `(when (looking-at "^diff")
      (progn
@@ -23,13 +37,13 @@
 (defun git-overlay ()
   (interactive)
   (save-excursion
-    (let* ((path (basename (buffer-file-name)))
-           (file (filename (buffer-file-name)))
+    (let* ((path (git-overlay-basedir (buffer-file-name)))
+           (file (git-overlay-filename (buffer-file-name)))
            (buffer (current-buffer))
            (lines-skip '((0 0))))
       (with-current-buffer buffer
         (remove-overlays))
-      (with-directory path
+      (git-overlay-with-directory path
                       (progn
                         (with-temp-buffer
                           (call-process "git" nil t t "--no-pager" "diff" file)
