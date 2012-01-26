@@ -17,24 +17,24 @@
 
 (defmacro walk-head (&rest body)
   `(when (looking-at "^diff")
-     (progn
-       ,@body
-       (forward-line) ;; skip over "diff" line
-       (while (and (not (eobp)) (not (looking-at "^diff\\|^@@")))
+       (progn
          ,@body
-         (forward-line))
-       (if (not (eobp))
-           (goto-char (match-beginning 0))
-         (goto-char (point-max))))))
+         (forward-line) ;; skip over "diff" line
+         (while (and (not (eobp)) (not (looking-at "^diff\\|^@@")))
+           ,@body
+           (forward-line))
+         (if (not (eobp))
+             (goto-char (match-beginning 0))
+           (goto-char (point-max))))))
 
 (defmacro walk-hunk (&rest body)
   `(when (looking-at "^@@\s-\\([0-9]+\\)\,[0-9]+\s\\+\\([0-9]+\\)\,[0-9]+\s@@.*")
-     (cond ,@body)
-     (forward-line)
-     (while (and (not (looking-at "^@@.*")) (not (eobp)))
        (cond ,@body)
-       (forward-line))
-     (looking-at "^@@.*")))
+       (forward-line)
+       (while (and (not (looking-at "^@@.*")) (not (eobp)))
+         (cond ,@body)
+         (forward-line))
+       (looking-at "^@@.*")))
 
 (defun git-overlay ()
   (interactive)
@@ -125,5 +125,41 @@
                                                                                 (forward-line 1)
                                                                                 (point)))) 'face '((:background "#4f354f")))
                                                  (setq hunk-line (+ hunk-line 1)))))))))))))
+
+(defun git-get-line-commit-info ()
+  (with-temp-buffer
+    (let ((saved-directory default-directory))
+      (cd "/home/lazor/org")
+      (= (apply 'call-process "git" nil (current-buffer) nil (list "blame" "--porcelain" "--" "projects.org")) 0)
+      (goto-char (point-min))
+      (when (re-search-forward "org-mode Integration" nil t)
+        (when (re-search-backward "^\\([0-9a-f]\\{40\\}\\) \\([0-9]+\\) \\([0-9]+\\) \\([0-9]+\\)$" nil t)
+          (let ((p (point-at-bol))
+                (s (match-string-no-properties 1))
+                (beg nil)
+                (end nil))
+            (while (and s (re-search-backward s nil t))
+              (setq p (point-at-bol)))
+            (end-of-line)
+            (setq beg p)
+            (setq end (if (re-search-forward "^\\([0-9a-f]\\{40\\}\\) \\([0-9]+\\) \\([0-9]+\\) \\([0-9]+\\)$" nil t)
+                          (point-at-bol)
+                        (point-max)))
+            (print (parse-commit-info (buffer-substring-no-properties beg end)))
+            )))
+      (cd saved-directory))))
+
+(defun parse-commit-info (str)
+  (let ((r '()))
+    (dolist (line (split-string str "\n" t) r)
+      (cond ((string-match "author \\(.*\\)" line)
+             (add-to-list 'r `("author" . ,(match-string 1 line))))
+            ((string-match "author-mail \\(.*\\)" line)
+             (add-to-list 'r `("author-mail" . ,(match-string 1 line))))
+            ((string-match "commiter \\(.*\\)" line)
+             (add-to-list 'r `("commiter" . ,(match-string 1 line))))
+            ((string-match "commiter-mail \\(.*\\)" line)
+             (add-to-list 'r `("commiter-mail" . ,(match-string 1 line))))
+            ))))
 
 (provide 'git-overlay)
