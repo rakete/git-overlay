@@ -83,7 +83,6 @@
                                                                                 (forward-line 1)
                                                                                 (point)))) 'face '((:background "#36364f")))
                                                  (setq hunk-line (+ hunk-line 1))))))))
-                        ;;(print "DONE THIS!!!!!!!!!!!!!!!!!!!!!!!!")
                         (with-temp-buffer
                           (call-process "git" nil t t "--no-pager" "diff" "--cached" file)
                           (goto-char (point-min))
