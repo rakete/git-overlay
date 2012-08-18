@@ -1,7 +1,7 @@
 
 (require 'cl)
 
-(defun git-overlay-basedir (path)
+(defun git-overlay-dirname (path)
   (apply #'concat (reverse (mapcar (lambda (s)
                                      (concat s "/"))
                                    (cdr (reverse (split-string path "/")))))))
@@ -39,7 +39,7 @@
 (defun git-overlay ()
   (interactive)
   (save-excursion
-    (let* ((path (git-overlay-basedir (buffer-file-name)))
+    (let* ((path (git-overlay-dirname (buffer-file-name)))
            (file (git-overlay-filename (buffer-file-name)))
            (buffer (current-buffer))
            (lines-skip '((0 0))))
