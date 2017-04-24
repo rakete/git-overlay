@@ -1,3 +1,9 @@
+<p align="center">
+<img src="screenshot.png" width="672"/>
+</p>
+
+## About
+
 Creates a simple overlay for the current buffer that shows non-staged git chunks.
 
 Lines around additions/deletions are shown blue, additions in green, deletions
@@ -6,7 +12,7 @@ in red.
 Just copy it somewhere in your load-path, or add the directory containing the
 git-overlay.el file with (add-to-list 'load-path "/path/to/repo/")
 
-then just (require 'git-overlay) and do M-x git-overlay in a buffer with a file
+Then just (require 'git-overlay) and do M-x git-overlay in a buffer with a file
 from a git repository open.
 
 Calling git-overlay twice will toggle the overlays on and off. If you change
