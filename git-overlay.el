@@ -68,7 +68,6 @@
     (let* ((path (git-overlay-dirname (buffer-file-name)))
            (file (git-overlay-filename (buffer-file-name)))
            (buffer (current-buffer))
-           (lines-skip '((0 0)))
            (toggle t))
       (remove-hook 'after-change-functions 'git-overlay-remove)
       (with-current-buffer buffer
@@ -83,82 +82,45 @@
                                         (walk-head
                                          nil)
                                         (while (let* ((hunk-line nil)
-                                                      (hunk-old-line nil))
+                                                      (deleted-lines nil))
                                                  (walk-hunk ((looking-at "^@@\s-\\([0-9]+\\)\,\\([0-9]+\\)\s\\+\\([0-9]+\\)\,\\([0-9]+\\)\s@@.*")
                                                              (progn
                                                                (message (substring (thing-at-point 'line) 0 -1))
-                                                               (setq hunk-line (string-to-number (match-string 3))
-                                                                     hunk-old-line (string-to-number (match-string 1))
-                                                                     skip (string-to-number (match-string 4))
-                                                                     old-skip (string-to-number (match-string 2))
-                                                                     lines-skip (cons (list hunk-old-line (+ (cadar lines-skip) (- skip old-skip))) lines-skip))
-                                                               (print lines-skip)))
+                                                               (setq hunk-line (1- (string-to-number (match-string 3))))))
                                                             ((looking-at "^\\+.*")
                                                              (with-current-buffer buffer
-                                                               (goto-line hunk-line)
+                                                               (goto-char (point-min))
+                                                               (forward-line hunk-line)
                                                                (let ((ov (make-overlay (line-beginning-position)
                                                                                        (save-excursion
                                                                                          (progn
                                                                                            (forward-line 1)
                                                                                            (point))))))
+                                                                 (when (stringp deleted-lines)
+                                                                   (overlay-put ov 'before-string (propertize deleted-lines 'face '((:background "#882020")))))
                                                                  (overlay-put ov 'face '((:background "#354f35")))
                                                                  (overlay-put ov 'git-overlay t))
-                                                               (setq hunk-line (+ hunk-line 1))))
+                                                               (setq hunk-line (+ hunk-line 1)
+                                                                     deleted-lines nil)))
                                                             ((looking-at "^-.*")
-                                                             nil)
+                                                             (let ((deleted-line (replace-regexp-in-string "^- " "-" (buffer-substring-no-properties (line-beginning-position) (line-end-position)))))
+                                                               (setq deleted-lines (concat deleted-lines deleted-line "\n"))
+                                                               ))
                                                             (t
                                                              (with-current-buffer buffer
-                                                               (goto-line hunk-line)
+                                                               (goto-char (point-min))
+                                                               (forward-line hunk-line)
                                                                (let ((ov (make-overlay (line-beginning-position)
                                                                                        (save-excursion
                                                                                          (progn
                                                                                            (forward-line 1)
                                                                                            (point))))))
+                                                                 (when (stringp deleted-lines)
+                                                                   (overlay-put ov 'before-string (propertize deleted-lines 'face '((:background "#882020")))))
                                                                  (overlay-put ov 'face '((:background "#36364f")))
                                                                  (overlay-put ov 'git-overlay t))
-                                                               (setq hunk-line (+ hunk-line 1))))))))
-                                      (with-temp-buffer
-                                        (call-process "git" nil t t "--no-pager" "diff" "--cached" file)
-                                        (goto-char (point-min))
-                                        (walk-head
-                                         nil)
-                                        (while (let* ((hunk-line nil)
-                                                      (hunk-old-line nil))
-                                                 (walk-hunk ((looking-at "^@@\s-\\([0-9]+\\)\,\\([0-9]+\\)\s\\+\\([0-9]+\\)\,\\([0-9]+\\)\s@@.*")
-                                                             (progn
-                                                               (message (substring (thing-at-point 'line) 0 -1))
-                                                               (print lines-skip)
-                                                               (setq hunk-old-line (string-to-number (match-string 3))
-                                                                     hunk-line (let ((cs '()))
-                                                                                 (loop for l in lines-skip
-                                                                                       collect l into cs
-                                                                                       until (< (car l) hunk-old-line)
-                                                                                       finally return (+ hunk-old-line (cadar (reverse cs))))))
-                                                               ))
-                                                            ((looking-at "^\\+.*")
-                                                             (with-current-buffer buffer
-                                                               (goto-line hunk-line)
-                                                               (let ((ov (make-overlay (line-beginning-position)
-                                                                                       (save-excursion
-                                                                                         (progn
-                                                                                           (forward-line 1)
-                                                                                           (point))))))
-                                                                 (overlay-put ov 'face '((:background "#4f3535")))
-                                                                 (overlay-put ov 'git-overlay t))
-                                                               (setq hunk-line (+ hunk-line 1))))
-                                                            ((looking-at "^-.*")
-                                                             nil)
-                                                            (t
-                                                             (with-current-buffer buffer
-                                                               (goto-line hunk-line)
-                                                               (let ((ov (make-overlay (line-beginning-position)
-                                                                                       (save-excursion
-                                                                                         (progn
-                                                                                           (forward-line 1)
-                                                                                           (point))))))
-                                                                 (overlay-put ov 'face '((:background "#4f354f")))
-                                                                 (overlay-put ov 'git-overlay t))
-                                                               (setq hunk-line (+ hunk-line 1))))))))))))))
+                                                               (setq hunk-line (+ hunk-line 1)
+                                                                     deleted-lines nil)))))))))))))
 
 
 
