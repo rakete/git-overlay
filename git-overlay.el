@@ -103,7 +103,7 @@
                                                                (setq hunk-line (+ hunk-line 1)
                                                                      deleted-lines nil)))
                                                             ((looking-at "^-.*")
-                                                             (let ((deleted-line (replace-regexp-in-string "^- " "-" (buffer-substring-no-properties (line-beginning-position) (line-end-position)))))
+                                                             (let ((deleted-line (replace-regexp-in-string "^-" "" (buffer-substring-no-properties (line-beginning-position) (line-end-position)))))
                                                                (setq deleted-lines (concat deleted-lines deleted-line "\n"))
                                                                ))
                                                             (t
