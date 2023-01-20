@@ -176,7 +176,7 @@
             ((looking-at "filename \\(.*\\)$")
              (add-to-list 'commit-alist `(filename . ,(match-string 1))))
             )
-      (next-line)
+      (forward-line)
       (goto-char (point-at-bol)))
     (puthash revision commit-alist git-parsed-commits))
   commit-alist)
